@@ -1,3 +1,4 @@
+﻿
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,29 +46,16 @@
             height: 220px;
             margin: auto;
             border-radius: 50%;
-            background: radial-gradient(
-                circle,
-                #ffffff 0%,
-                #8eeaff 8%,
-                #008cff 35%,
-                #003b68 60%,
-                #06101c 75%
-            );
-            box-shadow:
-                0 0 30px #008cff,
-                0 0 70px #0066aa,
-                0 0 120px #003b68;
+            background: radial-gradient( circle, #ffffff 0%, #8eeaff 8%, #008cff 35%, #003b68 60%, #06101c 75% );
+            box-shadow: 0 0 30px #008cff, 0 0 70px #0066aa, 0 0 120px #003b68;
             animation: idle 3s infinite ease-in-out;
             transition: 0.3s;
         }
 
-        .orb.active {
-            animation: active 1s infinite ease-in-out;
-            box-shadow:
-                0 0 40px #00c8ff,
-                0 0 90px #008cff,
-                0 0 150px #0066aa;
-        }
+            .orb.active {
+                animation: active 1s infinite ease-in-out;
+                box-shadow: 0 0 40px #00c8ff, 0 0 90px #008cff, 0 0 150px #0066aa;
+            }
 
         @keyframes idle {
             0%, 100% {
@@ -121,9 +109,9 @@
             cursor: pointer;
         }
 
-        button:hover {
-            background: #0b2235;
-        }
+            button:hover {
+                background: #0b2235;
+            }
 
         .status {
             margin-top: 15px;
@@ -180,6 +168,8 @@
         let recognitionRunning = false;
         let restarting = false;
 
+        let britishVoice = null;
+
 
         /* =====================================================
            SPEECH RECOGNITION
@@ -232,6 +222,7 @@
                 if (passiveMode) {
 
                     if (
+                        transcript.includes("hey jarvis") ||
                         transcript.includes("hey jarvis")
                     ) {
 
@@ -258,10 +249,7 @@
 
                 recognitionRunning = false;
 
-                console.log(
-                    "Speech recognition error:",
-                    event.error
-                );
+                console.log("Speech recognition error:", event.error);
 
                 if (!jarvisRunning) {
                     return;
@@ -287,10 +275,67 @@
 
 
         /* =====================================================
+           BRITISH VOICE
+        ===================================================== */
+
+        function loadBritishVoice() {
+
+            const voices = speechSynthesis.getVoices();
+
+
+            /*
+               First try to find a British male voice.
+            */
+
+            britishVoice =
+                voices.find(voice =>
+                    voice.lang === "en-GB" &&
+                    /male|man|uk english/i.test(voice.name)
+                );
+
+
+            /*
+               If no British male voice exists,
+               use any British English voice.
+            */
+
+            if (!britishVoice) {
+
+                britishVoice =
+                    voices.find(voice =>
+                        voice.lang === "en-GB"
+                    );
+            }
+
+
+            /*
+               Final British fallback.
+            */
+
+            if (!britishVoice) {
+
+                britishVoice =
+                    voices.find(voice =>
+                        voice.lang.startsWith("en-GB")
+                    );
+            }
+
+        }
+
+
+        /*
+           Chrome sometimes loads voices
+           after the page loads.
+        */
+
+        speechSynthesis.onvoiceschanged =
+            loadBritishVoice;
+
+        loadBritishVoice();
+
+
+        /* =====================================================
            JARVIS SPEAK
-           
-           No voice or language is specified here.
-           This lets the browser use its default TTS voice.
         ===================================================== */
 
         function speak(text) {
@@ -314,27 +359,30 @@
 
 
             /*
-               IMPORTANT:
-
-               We do NOT set:
-
-               speech.voice
-               speech.lang
-
-               This means JARVIS does not force
-               British English or another specific voice.
+               British English
             */
+
+            speech.lang = "en-GB";
 
 
             /*
-               JARVIS-style delivery.
-
-               These don't change the selected voice.
+               JARVIS-style delivery
             */
 
             speech.rate = 0.88;
+
             speech.pitch = 0.78;
+
             speech.volume = 1;
+
+
+            /*
+               Use detected British voice.
+            */
+
+            if (britishVoice) {
+                speech.voice = britishVoice;
+            }
 
 
             speech.onstart = function () {
@@ -366,73 +414,55 @@
         function startJarvis() {
 
             if (!recognition) {
-
                 output.textContent =
                     "Speech recognition is not supported in this browser.";
-
                 return;
             }
-
 
             if (jarvisRunning) {
                 return;
             }
 
-
             jarvisRunning = true;
             passiveMode = true;
-
 
             mode.textContent = "PASSIVE MODE";
             mode.className = "mode passive";
 
-
-            status.textContent =
-                "Requesting permissions...";
-
+            status.textContent = "Requesting permissions...";
 
             /*
                Ask Chrome for microphone permission.
             */
-
             try {
-
                 recognition.start();
-
             } catch (error) {
-
                 console.log(error);
             }
 
-
             /*
                Attempt a popup from the user's button click.
+               Chrome may allow it automatically because this
+               code is running directly from the button click.
             */
-
             const popup = window.open(
                 "about:blank",
                 "_blank"
             );
 
-
             if (popup) {
-
                 popup.close();
 
                 status.textContent =
                     "Microphone and popup access ready.";
-
             } else {
-
                 status.textContent =
                     "Microphone ready. Popups may be blocked.";
             }
 
-
             /*
                Give the browser a moment before JARVIS speaks.
             */
-
             setTimeout(() => {
 
                 speak(
@@ -506,9 +536,7 @@
                 command.includes("hello jarvis")
             ) {
 
-                speak(
-                    "Good day. How may I assist you?"
-                );
+                speak("Good day. How may I assist you?");
 
                 returnToPassive();
 
@@ -611,9 +639,7 @@
 
                 if (search.length === 0) {
 
-                    speak(
-                        "What would you like me to search for?"
-                    );
+                    speak("What would you like me to search for?");
 
                     returnToPassive();
 
@@ -842,6 +868,7 @@
                         "Recognition restart:",
                         error
                     );
+
                 }
 
 
@@ -865,10 +892,8 @@
             if (recognition) {
 
                 try {
-
                     recognition.stop();
-
-                } catch (error) {}
+                } catch (error) { }
 
             }
 
