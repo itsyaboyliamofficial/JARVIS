@@ -567,6 +567,32 @@
 
                 return;
             }
+            
+
+            /* =============================================
+               OPEN GMAIL
+            ============================================= */
+
+            if (
+                command.includes("open gmail") ||
+                command === "gmail"
+            ) {
+
+                speak("Opening Gmail.");
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://www.gmail.com",
+                        "_blank"
+                    );
+
+                }, 700);
+
+                returnToPassive();
+
+                return;
+            }
 
 
             /* =============================================
