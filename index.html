@@ -570,20 +570,20 @@
             
 
             /* =============================================
-               OPEN GOOGLE CLASSROOM
+               OPEN SPOTIFY
             ============================================= */
 
             if (
-                command.includes("open classroom") ||
-                command === "classroom"
+                command.includes("open spotify") ||
+                command === "spotify"
             ) {
 
-                speak("Opening Classroom.");
+                speak("Opening Spotify.");
 
                 setTimeout(() => {
 
                     window.open(
-                        "https://www.classroom.google.com",
+                        "https://open.spotify.com",
                         "_blank"
                     );
 
