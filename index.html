@@ -130,5 +130,795 @@
             color: #506b7c;
             font-size: 13px;
         }
-    </styl
-```
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>JARVIS</h1>
+
+        <div id="orb" class="orb"></div>
+
+        <div id="mode" class="mode passive">
+            PASSIVE MODE
+        </div>
+
+        <div id="output" class="output">
+            Say "Hey JARVIS"
+        </div>
+
+        <button onclick="startJarvis()">
+            START JARVIS
+        </button>
+
+        <div id="status" class="status">
+            System offline
+        </div>
+
+    </div>
+
+    <script>
+
+        /* =====================================================
+           ELEMENTS
+        ===================================================== */
+
+        const orb = document.getElementById("orb");
+        const mode = document.getElementById("mode");
+        const output = document.getElementById("output");
+        const status = document.getElementById("status");
+
+
+        /* =====================================================
+           JARVIS STATE
+        ===================================================== */
+
+        let jarvisRunning = false;
+        let passiveMode = true;
+        let recognitionRunning = false;
+        let restarting = false;
+
+
+        /* =====================================================
+           SPEECH RECOGNITION
+        ===================================================== */
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        let recognition = null;
+
+        if (SpeechRecognition) {
+
+            recognition = new SpeechRecognition();
+
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.lang = "en-US";
+
+
+            recognition.onstart = function () {
+
+                recognitionRunning = true;
+
+                status.textContent = passiveMode
+                    ? "Listening for wake word..."
+                    : "Listening for command...";
+            };
+
+
+            recognition.onresult = function (event) {
+
+                const transcript =
+                    event.results[0][0].transcript
+                        .trim()
+                        .toLowerCase();
+
+                console.log(transcript);
+
+                if (!jarvisRunning) {
+                    return;
+                }
+
+
+                /* =============================================
+                   PASSIVE MODE
+                ============================================= */
+
+                if (passiveMode) {
+
+                    if (
+                        transcript.includes("hey jarvis")
+                    ) {
+
+                        activateJarvis();
+
+                    } else {
+
+                        restartRecognition();
+                    }
+
+                    return;
+                }
+
+
+                /* =============================================
+                   ACTIVE MODE
+                ============================================= */
+
+                processCommand(transcript);
+            };
+
+
+            recognition.onerror = function (event) {
+
+                recognitionRunning = false;
+
+                console.log(
+                    "Speech recognition error:",
+                    event.error
+                );
+
+                if (!jarvisRunning) {
+                    return;
+                }
+
+                restartRecognition();
+            };
+
+
+            recognition.onend = function () {
+
+                recognitionRunning = false;
+
+                if (
+                    jarvisRunning &&
+                    !restarting
+                ) {
+                    restartRecognition();
+                }
+            };
+
+        }
+
+
+        /* =====================================================
+           JARVIS SPEAK
+           
+           No voice or language is specified here.
+           This lets the browser use its default TTS voice.
+        ===================================================== */
+
+        function speak(text) {
+
+            output.textContent = text;
+
+            if (!("speechSynthesis" in window)) {
+                return;
+            }
+
+
+            /*
+               Stop anything currently speaking.
+            */
+
+            speechSynthesis.cancel();
+
+
+            const speech =
+                new SpeechSynthesisUtterance(text);
+
+
+            /*
+               IMPORTANT:
+
+               We do NOT set:
+
+               speech.voice
+               speech.lang
+
+               This means JARVIS does not force
+               British English or another specific voice.
+            */
+
+
+            /*
+               JARVIS-style delivery.
+
+               These don't change the selected voice.
+            */
+
+            speech.rate = 0.88;
+            speech.pitch = 0.78;
+            speech.volume = 1;
+
+
+            speech.onstart = function () {
+
+                orb.classList.add("active");
+            };
+
+
+            speech.onend = function () {
+
+                orb.classList.remove("active");
+            };
+
+
+            speech.onerror = function () {
+
+                orb.classList.remove("active");
+            };
+
+
+            speechSynthesis.speak(speech);
+        }
+
+
+        /* =====================================================
+           START JARVIS
+        ===================================================== */
+
+        function startJarvis() {
+
+            if (!recognition) {
+
+                output.textContent =
+                    "Speech recognition is not supported in this browser.";
+
+                return;
+            }
+
+
+            if (jarvisRunning) {
+                return;
+            }
+
+
+            jarvisRunning = true;
+            passiveMode = true;
+
+
+            mode.textContent = "PASSIVE MODE";
+            mode.className = "mode passive";
+
+
+            status.textContent =
+                "Requesting permissions...";
+
+
+            /*
+               Ask Chrome for microphone permission.
+            */
+
+            try {
+
+                recognition.start();
+
+            } catch (error) {
+
+                console.log(error);
+            }
+
+
+            /*
+               Attempt a popup from the user's button click.
+            */
+
+            const popup = window.open(
+                "about:blank",
+                "_blank"
+            );
+
+
+            if (popup) {
+
+                popup.close();
+
+                status.textContent =
+                    "Microphone and popup access ready.";
+
+            } else {
+
+                status.textContent =
+                    "Microphone ready. Popups may be blocked.";
+            }
+
+
+            /*
+               Give the browser a moment before JARVIS speaks.
+            */
+
+            setTimeout(() => {
+
+                speak(
+                    "JARVIS online. Say Hey JARVIS when you require assistance."
+                );
+
+            }, 800);
+        }
+
+
+        /* =====================================================
+           ACTIVATE JARVIS
+        ===================================================== */
+
+        function activateJarvis() {
+
+            passiveMode = false;
+
+
+            mode.textContent =
+                "ACTIVE MODE";
+
+            mode.className =
+                "mode active-text";
+
+
+            status.textContent =
+                "Awaiting command...";
+
+
+            speak("Yes?");
+
+
+            /*
+               Give the voice a moment to finish.
+            */
+
+            setTimeout(() => {
+
+                restartRecognition();
+
+            }, 1000);
+        }
+
+
+        /* =====================================================
+           PROCESS COMMAND
+        ===================================================== */
+
+        function processCommand(command) {
+
+            console.log("Command:", command);
+
+
+            /* =============================================
+               REMOVE WAKE WORD IF PRESENT
+            ============================================= */
+
+            command = command
+                .replace("hey jarvis", "")
+                .trim();
+
+
+            /* =============================================
+               GREETINGS
+            ============================================= */
+
+            if (
+                command === "hello" ||
+                command === "hi" ||
+                command.includes("hello jarvis")
+            ) {
+
+                speak(
+                    "Good day. How may I assist you?"
+                );
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               OPEN YOUTUBE
+            ============================================= */
+
+            if (
+                command.includes("open youtube") ||
+                command === "youtube"
+            ) {
+
+                speak("Opening YouTube.");
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://www.youtube.com",
+                        "_blank"
+                    );
+
+                }, 700);
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               OPEN SPOTIFY
+            ============================================= */
+
+            if (
+                command.includes("open spotify") ||
+                command === "spotify"
+            ) {
+
+                speak("Opening Spotify.");
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://open.spotify.com",
+                        "_blank"
+                    );
+
+                }, 700);
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               OPEN GOOGLE
+            ============================================= */
+
+            if (
+                command.includes("open google") ||
+                command === "google"
+            ) {
+
+                speak("Opening Google.");
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://www.google.com",
+                        "_blank"
+                    );
+
+                }, 700);
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               SEARCH GOOGLE
+            ============================================= */
+
+            if (
+                command.startsWith("search for") ||
+                command.startsWith("google")
+            ) {
+
+                let search = command
+                    .replace("search for", "")
+                    .replace("google", "")
+                    .trim();
+
+
+                if (search.length === 0) {
+
+                    speak(
+                        "What would you like me to search for?"
+                    );
+
+                    returnToPassive();
+
+                    return;
+                }
+
+
+                speak(
+                    "Searching Google for " + search
+                );
+
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://www.google.com/search?q=" +
+                        encodeURIComponent(search),
+                        "_blank"
+                    );
+
+                }, 700);
+
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               TIME
+            ============================================= */
+
+            if (
+                command.includes("what time") ||
+                command === "time" ||
+                command.includes("current time")
+            ) {
+
+                const now = new Date();
+
+                const time =
+                    now.toLocaleTimeString(
+                        [],
+                        {
+                            hour: "numeric",
+                            minute: "2-digit"
+                        }
+                    );
+
+
+                speak(
+                    "The current time is " +
+                    time
+                );
+
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               DATE
+            ============================================= */
+
+            if (
+                command.includes("what date") ||
+                command === "date" ||
+                command.includes("today's date")
+            ) {
+
+                const now = new Date();
+
+                const date =
+                    now.toLocaleDateString(
+                        [],
+                        {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric"
+                        }
+                    );
+
+
+                speak(
+                    "Today is " +
+                    date
+                );
+
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               HELP
+            ============================================= */
+
+            if (
+                command === "help" ||
+                command.includes("what can you do")
+            ) {
+
+                speak(
+                    "I can open websites, search Google, " +
+                    "tell you the time and date, and respond " +
+                    "to basic commands."
+                );
+
+
+                returnToPassive();
+
+                return;
+            }
+
+
+            /* =============================================
+               STOP JARVIS
+            ============================================= */
+
+            if (
+                command.includes("stop listening") ||
+                command.includes("go offline") ||
+                command === "shutdown"
+            ) {
+
+                speak("Going offline.");
+
+                setTimeout(() => {
+
+                    stopJarvis();
+
+                }, 1500);
+
+                return;
+            }
+
+
+            /* =============================================
+               UNKNOWN COMMAND
+            ============================================= */
+
+            speak(
+                "I'm sorry, I don't currently have a command for that."
+            );
+
+
+            returnToPassive();
+        }
+
+
+        /* =====================================================
+           RETURN TO PASSIVE MODE
+        ===================================================== */
+
+        function returnToPassive() {
+
+            passiveMode = true;
+
+
+            mode.textContent =
+                "PASSIVE MODE";
+
+            mode.className =
+                "mode passive";
+
+
+            status.textContent =
+                'Listening for "Hey JARVIS"...';
+
+
+            /*
+               Give speech synthesis time to finish.
+            */
+
+            setTimeout(() => {
+
+                restartRecognition();
+
+            }, 1500);
+        }
+
+
+        /* =====================================================
+           RESTART SPEECH RECOGNITION
+        ===================================================== */
+
+        function restartRecognition() {
+
+            if (!jarvisRunning) {
+                return;
+            }
+
+
+            if (!recognition) {
+                return;
+            }
+
+
+            if (recognitionRunning) {
+                return;
+            }
+
+
+            if (restarting) {
+                return;
+            }
+
+
+            restarting = true;
+
+
+            setTimeout(() => {
+
+                try {
+
+                    recognition.start();
+
+                } catch (error) {
+
+                    console.log(
+                        "Recognition restart:",
+                        error
+                    );
+                }
+
+
+                restarting = false;
+
+            }, 500);
+        }
+
+
+        /* =====================================================
+           STOP JARVIS
+        ===================================================== */
+
+        function stopJarvis() {
+
+            jarvisRunning = false;
+
+            passiveMode = true;
+
+
+            if (recognition) {
+
+                try {
+
+                    recognition.stop();
+
+                } catch (error) {}
+
+            }
+
+
+            speechSynthesis.cancel();
+
+
+            recognitionRunning = false;
+
+
+            mode.textContent =
+                "OFFLINE";
+
+            mode.className =
+                "mode passive";
+
+
+            status.textContent =
+                "System offline";
+
+
+            output.textContent =
+                'Press "START JARVIS" to begin';
+
+
+            orb.classList.remove("active");
+        }
+
+
+        /* =====================================================
+           KEYBOARD SHORTCUT
+        ===================================================== */
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Enter" &&
+                    !jarvisRunning
+                ) {
+
+                    startJarvis();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>
