@@ -412,49 +412,64 @@
 
         function startJarvis() {
 
-            if (!recognition) {
+    if (!recognition) {
+        output.textContent =
+            "Speech recognition is not supported in this browser.";
+        return;
+    }
 
-                output.textContent =
-                    "Speech recognition is not supported in this browser.";
+    if (jarvisRunning) {
+        return;
+    }
 
-                return;
-            }
+    jarvisRunning = true;
+    passiveMode = true;
 
+    mode.textContent = "PASSIVE MODE";
+    mode.className = "mode passive";
 
-            if (jarvisRunning) {
-                return;
-            }
+    status.textContent = "Requesting permissions...";
 
+    /*
+       Ask Chrome for microphone permission.
+    */
+    try {
+        recognition.start();
+    } catch (error) {
+        console.log(error);
+    }
 
-            jarvisRunning = true;
+    /*
+       Attempt a popup from the user's button click.
+       Chrome may allow it automatically because this
+       code is running directly from the button click.
+    */
+    const popup = window.open(
+        "about:blank",
+        "_blank"
+    );
 
-            passiveMode = true;
+    if (popup) {
+        popup.close();
 
+        status.textContent =
+            "Microphone and popup access ready.";
+    } else {
+        status.textContent =
+            "Microphone ready. Popups may be blocked.";
+    }
 
-            mode.textContent =
-                "PASSIVE MODE";
+    /*
+       Give the browser a moment before JARVIS speaks.
+    */
+    setTimeout(() => {
 
-            mode.className =
-                "mode passive";
+        speak(
+            "JARVIS online. Say Hey JARVIS when you require assistance."
+        );
 
-
-            status.textContent =
-                "Starting JARVIS...";
-
-
-            speak("JARVIS online. Say Hey JARVIS when you require assistance.");
-
-
-            /*
-               Wait for the greeting before listening.
-            */
-
-            setTimeout(() => {
-
-                restartRecognition();
-
-            }, 2500);
-        }
+    }, 800);
+}
 
 
         /* =====================================================
