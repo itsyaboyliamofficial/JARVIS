@@ -570,20 +570,20 @@
             
 
             /* =============================================
-               OPEN GMAIL
+               OPEN GOOGLE CLASSROOM
             ============================================= */
 
             if (
-                command.includes("open jeemail") ||
-                command === "jeemail"
+                command.includes("open google classroom") ||
+                command === "google classroom"
             ) {
 
-                speak("Opening jeemail.");
+                speak("Opening Google Classroom.");
 
                 setTimeout(() => {
 
                     window.open(
-                        "https://www.gmail.com",
+                        "https://www.classroom.google.com",
                         "_blank"
                     );
 
