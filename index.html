@@ -324,11 +324,9 @@
             try {
 
                 status.textContent =
-                    "Loading JARVIS voice and detecting GPU...";
+                    "Loading JARVIS voice...";
 
-                // Use the GPU when the browser supports WebGPU.
-                // This is much faster than the WASM fallback on most PCs.
-                ttsDevice = await detectTTSDevice();
+                ttsDevice = "wasm";
 
                 console.log(
                     "Kokoro TTS device:",
@@ -359,9 +357,7 @@
                 );
 
                 status.textContent =
-                    ttsDevice === "webgpu"
-                        ? "JARVIS voice ready — GPU acceleration."
-                        : "JARVIS voice ready — CPU/WASM mode.";
+                    "JARVIS voice ready.";
 
                 return true;
 
