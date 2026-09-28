@@ -326,8 +326,7 @@
                 status.textContent =
                     "Loading JARVIS voice...";
 
-                ttsDevice =
-                    await detectTTSDevice();
+                ttsDevice = "wasm";
 
                 console.log(
                     "Kokoro TTS device:",
@@ -469,8 +468,21 @@
                  * into a playable WAV Blob.
                  */
 
-                const blob =
-                    audio.toBlob();
+                let blob;
+
+                if (typeof audio.toBlob === "function") {
+                    blob = audio.toBlob();
+                } else if (audio.audio && audio.sampling_rate) {
+                    blob = audio.toBlob
+                        ? audio.toBlob()
+                        : null;
+                }
+
+                if (!blob) {
+                    throw new Error(
+                        "Kokoro returned audio in an unsupported format."
+                    );
+                }
 
                 currentAudioURL =
                     URL.createObjectURL(blob);
