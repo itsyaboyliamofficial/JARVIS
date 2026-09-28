@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,7 +147,16 @@
 
     </div>
 
-    <script>
+    <script type="module">
+        /*
+         * =====================================================
+         * KOKORO TTS
+         * Runs locally in the browser.
+         * No system voice is used.
+         * =====================================================
+         */
+        import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+
 
         /* =====================================================
            ELEMENTS
@@ -168,7 +177,17 @@
         let recognitionRunning = false;
         let restarting = false;
 
-        let britishVoice = null;
+        let jarvisTTS = null;
+        let ttsReady = false;
+        let currentAudio = null;
+        let currentAudioURL = null;
+
+        // British male Kokoro voice for JARVIS.
+        // Other British male options include: bm_fable, bm_george, bm_lewis, bm_daniel.
+        const JARVIS_VOICE = "bm_george";
+
+        // Kokoro runs with WebGPU when available and falls back to WASM.
+        let ttsDevice = "wasm";
 
 
         /* =====================================================
@@ -275,135 +294,256 @@
 
 
         /* =====================================================
-           BRITISH VOICE
+           KOKORO VOICE INITIALIZATION
         ===================================================== */
 
-        function loadBritishVoice() {
+        async function detectTTSDevice() {
 
-            const voices = speechSynthesis.getVoices();
+            try {
 
+                if (
+                    "gpu" in navigator &&
+                    navigator.gpu &&
+                    await navigator.gpu.requestAdapter()
+                ) {
+                    return "webgpu";
+                }
 
-            /*
-               First try to find a British male voice.
-            */
+            } catch (error) {
 
-            britishVoice =
-                voices.find(voice =>
-                    voice.lang === "en-GB" &&
-                    /male|man|uk english/i.test(voice.name)
-                );
+                console.log("WebGPU unavailable, using WASM:", error);
 
-
-            /*
-               If no British male voice exists,
-               use any British English voice.
-            */
-
-            if (!britishVoice) {
-
-                britishVoice =
-                    voices.find(voice =>
-                        voice.lang === "en-GB"
-                    );
             }
 
-
-            /*
-               Final British fallback.
-            */
-
-            if (!britishVoice) {
-
-                britishVoice =
-                    voices.find(voice =>
-                        voice.lang.startsWith("en-GB")
-                    );
-            }
-
+            return "wasm";
         }
 
 
-        /*
-           Chrome sometimes loads voices
-           after the page loads.
-        */
+        async function initializeTTS() {
 
-        speechSynthesis.onvoiceschanged =
-            loadBritishVoice;
+            try {
 
-        loadBritishVoice();
+                status.textContent =
+                    "Loading JARVIS voice...";
+
+                ttsDevice =
+                    await detectTTSDevice();
+
+                console.log(
+                    "Kokoro TTS device:",
+                    ttsDevice
+                );
+
+                jarvisTTS =
+                    await KokoroTTS.from_pretrained(
+                        "onnx-community/Kokoro-82M-v1.0-ONNX",
+                        {
+                            dtype:
+                                ttsDevice === "webgpu"
+                                    ? "fp32"
+                                    : "q8",
+
+                            device:
+                                ttsDevice
+                        }
+                    );
+
+                ttsReady = true;
+
+                console.log(
+                    "Kokoro TTS loaded.",
+                    jarvisTTS.list_voices
+                        ? jarvisTTS.list_voices()
+                        : jarvisTTS.voices
+                );
+
+                status.textContent =
+                    "JARVIS voice ready.";
+
+                return true;
+
+            } catch (error) {
+
+                console.error(
+                    "Kokoro TTS initialization failed:",
+                    error
+                );
+
+                ttsReady = false;
+
+                status.textContent =
+                    "JARVIS voice failed to load.";
+
+                output.textContent =
+                    "Unable to load the JARVIS voice.";
+
+                return false;
+            }
+        }
+
+
+        // Start loading the model as soon as the page opens.
+        const ttsReadyPromise =
+            initializeTTS();
 
 
         /* =====================================================
            JARVIS SPEAK
         ===================================================== */
 
-        function speak(text) {
+
+
+        async function speak(text) {
 
             output.textContent = text;
 
-            if (!("speechSynthesis" in window)) {
-                return;
+            if (!jarvisTTS || !ttsReady) {
+
+                status.textContent =
+                    "Loading JARVIS voice...";
+
+                const ready =
+                    await ttsReadyPromise;
+
+                if (!ready || !jarvisTTS) {
+
+                    console.error(
+                        "JARVIS TTS is not available."
+                    );
+
+                    return;
+                }
             }
 
 
             /*
-               Stop anything currently speaking.
-            */
+             * Stop any previous JARVIS audio.
+             */
 
-            speechSynthesis.cancel();
+            if (currentAudio) {
 
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
 
-            const speech =
-                new SpeechSynthesisUtterance(text);
-
-
-            /*
-               British English
-            */
-
-            speech.lang = "en-GB";
-
-
-            /*
-               JARVIS-style delivery
-            */
-
-            speech.rate = 0.88;
-
-            speech.pitch = 0.78;
-
-            speech.volume = 1;
-
-
-            /*
-               Use detected British voice.
-            */
-
-            if (britishVoice) {
-                speech.voice = britishVoice;
             }
 
 
-            speech.onstart = function () {
+            if (currentAudioURL) {
+
+                URL.revokeObjectURL(
+                    currentAudioURL
+                );
+
+                currentAudioURL = null;
+            }
+
+
+            try {
 
                 orb.classList.add("active");
-            };
+
+                status.textContent =
+                    "JARVIS speaking...";
 
 
-            speech.onend = function () {
+                /*
+                 * Generate speech using the fixed
+                 * British male Kokoro voice.
+                 */
 
-                orb.classList.remove("active");
-            };
+                const audio =
+                    await jarvisTTS.generate(
+                        text,
+                        {
+                            voice:
+                                JARVIS_VOICE,
+
+                            speed: 0.88
+                        }
+                    );
 
 
-            speech.onerror = function () {
+                /*
+                 * Convert the generated waveform
+                 * into a playable WAV Blob.
+                 */
 
-                orb.classList.remove("active");
-            };
+                const blob =
+                    audio.toBlob();
+
+                currentAudioURL =
+                    URL.createObjectURL(blob);
+
+                currentAudio =
+                    new Audio(
+                        currentAudioURL
+                    );
+
+                currentAudio.volume = 1;
 
 
-            speechSynthesis.speak(speech);
+                currentAudio.onended =
+                    function () {
+
+                        orb.classList.remove(
+                            "active"
+                        );
+
+                        status.textContent =
+                            passiveMode
+                                ? 'Listening for "Hey JARVIS"...'
+                                : "Awaiting command...";
+
+                        if (currentAudioURL) {
+
+                            URL.revokeObjectURL(
+                                currentAudioURL
+                            );
+
+                            currentAudioURL = null;
+                        }
+
+                        currentAudio = null;
+                    };
+
+
+                currentAudio.onerror =
+                    function (error) {
+
+                        console.error(
+                            "JARVIS audio error:",
+                            error
+                        );
+
+                        orb.classList.remove(
+                            "active"
+                        );
+
+                        status.textContent =
+                            "Audio playback error.";
+
+                        currentAudio = null;
+                    };
+
+
+                await currentAudio.play();
+
+
+            } catch (error) {
+
+                console.error(
+                    "JARVIS speech generation failed:",
+                    error
+                );
+
+                orb.classList.remove(
+                    "active"
+                );
+
+                status.textContent =
+                    "JARVIS voice error.";
+            }
         }
 
 
@@ -898,7 +1038,22 @@
             }
 
 
-            speechSynthesis.cancel();
+            if (currentAudio) {
+
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+
+            }
+
+            if (currentAudioURL) {
+
+                URL.revokeObjectURL(
+                    currentAudioURL
+                );
+
+                currentAudioURL = null;
+            }
 
 
             recognitionRunning = false;
@@ -942,6 +1097,15 @@
 
             }
         );
+
+        /*
+         * The page uses an inline button handler for START JARVIS.
+         * Expose the function globally so the handler can still work
+         * after converting this script to an ES module.
+         */
+
+        window.startJarvis = startJarvis;
+        window.stopJarvis = stopJarvis;
 
     </script>
 
