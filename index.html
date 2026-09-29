@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,723 +8,304 @@
     <title>JARVIS</title>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap');
-
-        * {
-            box-sizing: border-box;
-        }
-
-        :root {
-            --cyan: #00d9ff;
-            --cyan-bright: #7df3ff;
-            --blue: #008cff;
-            --bg: #010407;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-        }
-
-        body {
-            margin: 0;
-            background:
-                radial-gradient(
-                    circle at 50% 44%,
-                    rgba(0, 145, 210, 0.12),
-                    transparent 26%
-                ),
-                radial-gradient(
-                    circle at 50% 50%,
-                    rgba(0, 70, 110, 0.08),
-                    transparent 45%
-                ),
-                #010407;
-
-            color: #d9faff;
-            font-family: "Orbitron", Arial, sans-serif;
-
-            height: 100vh;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Background grid */
-
-        body::before {
-            content: "";
-
-            position: fixed;
-            inset: 0;
-
-            pointer-events: none;
-
-            background:
-                linear-gradient(
-                    rgba(0, 217, 255, 0.035) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(0, 217, 255, 0.035) 1px,
-                    transparent 1px
-                );
-
-            background-size: 42px 42px;
-
-            mask-image:
-                radial-gradient(
-                    circle at center,
-                    black 10%,
-                    transparent 78%
-                );
-
-            animation: gridDrift 18s linear infinite;
-        }
-
-        /* Scanlines */
-
-        body::after {
-            content: "";
-
-            position: fixed;
-            inset: 0;
-
-            pointer-events: none;
-
-            background:
-                repeating-linear-gradient(
-                    to bottom,
-                    transparent 0px,
-                    transparent 4px,
-                    rgba(0, 217, 255, 0.018) 5px,
-                    transparent 6px
-                );
-
-            opacity: 0.7;
-
-            z-index: 20;
-        }
-
-        /* Main interface */
-
-        .container {
-            text-align: center;
-
-            width: min(92%, 820px);
-
-            min-height: 680px;
-
-            padding: 48px 34px 35px;
-
-            position: relative;
-
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-
-            isolation: isolate;
-        }
-
-        /* HUD corner */
-
-        .container::before,
-        .container::after {
-            content: "";
-
-            position: absolute;
-
-            width: 90px;
-            height: 90px;
-
-            border-color: rgba(0, 217, 255, 0.35);
-
-            pointer-events: none;
-        }
-
-        .container::before {
-            top: 22px;
-            left: 0;
-
-            border-top: 1px solid;
-            border-left: 1px solid;
-        }
-
-        .container::after {
-            bottom: 22px;
-            right: 0;
-
-            border-right: 1px solid;
-            border-bottom: 1px solid;
-        }
-
-        /* Title */
-
-        h1 {
-            margin: 0 0 8px;
-
-            font-size: clamp(38px, 7vw, 62px);
-
-            font-weight: 700;
-
-            letter-spacing: 14px;
-
-            padding-left: 14px;
-
-            color: #e9fdff;
-
-            text-shadow:
-                0 0 8px rgba(125, 243, 255, 0.9),
-                0 0 28px rgba(0, 217, 255, 0.55),
-                0 0 60px rgba(0, 140, 255, 0.3);
-
-            animation: titlePulse 3s ease-in-out infinite;
-        }
-
-        .subtitle {
-            color: rgba(125, 243, 255, 0.52);
-
-            margin-bottom: 38px;
-
-            font-size: 10px;
-
-            letter-spacing: 5px;
-
-            text-transform: uppercase;
-        }
-
-        /* =========================
-           AI ORB
-           ========================= */
-
-        .orb {
-            width: 245px;
-            height: 245px;
-
-            margin: 0 auto;
-
-            border-radius: 50%;
-
-            position: relative;
-
-            background:
-                radial-gradient(
-                    circle at 48% 44%,
-                    #ffffff 0%,
-                    #b8fbff 2%,
-                    #43e9ff 7%,
-                    rgba(0, 217, 255, 0.9) 14%,
-                    rgba(0, 120, 190, 0.62) 28%,
-                    rgba(0, 45, 80, 0.48) 48%,
-                    rgba(0, 10, 20, 0.96) 68%,
-                    #010407 74%
-                );
-
-            border: 1px solid rgba(91, 238, 255, 0.7);
-
-            box-shadow:
-                inset 0 0 25px rgba(0, 217, 255, 0.55),
-                inset 0 0 70px rgba(0, 140, 255, 0.25),
-                0 0 18px rgba(0, 217, 255, 0.85),
-                0 0 50px rgba(0, 140, 255, 0.5),
-                0 0 105px rgba(0, 100, 180, 0.32);
-
-            animation: orbFloat 4s ease-in-out infinite;
-
-            transition:
-                transform 0.3s,
-                box-shadow 0.3s,
-                filter 0.3s;
-        }
-
-        /* Inner energy ring */
-
-        .orb::before {
-            content: "";
-
-            position: absolute;
-
-            inset: -22px;
-
-            border:
-                1px solid
-                rgba(0, 217, 255, 0.35);
-
-            border-radius: 50%;
-
-            box-shadow:
-                0 0 14px rgba(0, 217, 255, 0.25),
-                inset 0 0 14px rgba(0, 217, 255, 0.18);
-
-            animation:
-                ringSpin 9s linear infinite;
-        }
-
-        /* Outer energy ring */
-
-        .orb::after {
-            content: "";
-
-            position: absolute;
-
-            inset: -43px;
-
-            border:
-                1px dashed
-                rgba(0, 140, 255, 0.28);
-
-            border-radius: 50%;
-
-            border-left-color:
-                rgba(0, 217, 255, 0.8);
-
-            border-right-color:
-                rgba(0, 217, 255, 0.5);
-
-            animation:
-                ringSpinReverse 13s linear infinite;
-        }
-
-        /* Speaking state */
-
-        .orb.active {
-            animation:
-                orbActive 0.9s ease-in-out infinite;
-
-            filter: brightness(1.25);
-
-            box-shadow:
-                inset 0 0 35px rgba(0, 240, 255, 0.8),
-                inset 0 0 90px rgba(0, 140, 255, 0.38),
-                0 0 25px #00eaff,
-                0 0 70px #008cff,
-                0 0 135px rgba(0, 190, 255, 0.55),
-                0 0 210px rgba(0, 100, 255, 0.28);
-        }
-
-        .orb.active::before {
-            animation-duration: 2.5s;
-
-            border-color:
-                rgba(80, 240, 255, 0.7);
-        }
-
-        .orb.active::after {
-            animation-duration: 4s;
-
-            border-color:
-                rgba(0, 217, 255, 0.55);
-        }
-
-        /* Mode */
-
-        .mode {
-            margin-top: 72px;
-
-            font-size: 15px;
-
-            font-weight: 500;
-
-            letter-spacing: 5px;
-
-            text-shadow:
-                0 0 14px currentColor;
-        }
-
-        .mode::before {
-            content: "◆";
-
-            display: inline-block;
-
-            margin-right: 12px;
-
-            font-size: 8px;
-
-            vertical-align: middle;
-
-            animation:
-                statusBlink 1.5s ease-in-out infinite;
-        }
-
-        .passive {
-            color: #608797;
-        }
-
-        .active-text {
-            color: var(--cyan);
-        }
-
-        /* Output */
-
-        .output {
-            margin-top: 18px;
-
-            min-height: 34px;
-
-            width: min(90%, 650px);
-
-            padding: 12px 20px;
-
-            color: #b8eaf3;
-
-            font-size: 14px;
-
-            letter-spacing: 1px;
-
-            line-height: 1.6;
-
-            border-top:
-                1px solid
-                rgba(0, 217, 255, 0.13);
-
-            border-bottom:
-                1px solid
-                rgba(0, 217, 255, 0.13);
-
-            text-shadow:
-                0 0 8px
-                rgba(125, 243, 255, 0.22);
-        }
-
-        /* Button */
-
-        button {
-            margin-top: 30px;
-
-            padding: 14px 32px;
-
-            position: relative;
-
-            overflow: hidden;
-
-            border:
-                1px solid
-                rgba(0, 217, 255, 0.75);
-
-            border-radius: 2px;
-
-            background:
-                linear-gradient(
-                    180deg,
-                    rgba(0, 217, 255, 0.1),
-                    rgba(0, 100, 160, 0.04)
-                ),
-                rgba(2, 13, 21, 0.9);
-
-            color: #bdf7ff;
-
-            font-family: "Orbitron", Arial, sans-serif;
-
-            font-size: 12px;
-
-            font-weight: 600;
-
-            letter-spacing: 3px;
-
-            cursor: pointer;
-
-            box-shadow:
-                0 0 12px rgba(0, 217, 255, 0.16),
-                inset 0 0 12px rgba(0, 217, 255, 0.05);
-
-            transition: 0.25s ease;
-        }
-
-        button::before {
-            content: "";
-
-            position: absolute;
-
-            top: 0;
-            left: -120%;
-
-            width: 70%;
-            height: 100%;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255, 255, 255, 0.25),
-                    transparent
-                );
-
-            transform: skewX(-20deg);
-
-            transition: left 0.5s;
-        }
-
-        button:hover {
-            color: white;
-
-            border-color: #62efff;
-
-            background:
-                rgba(0, 160, 210, 0.13);
-
-            box-shadow:
-                0 0 18px rgba(0, 217, 255, 0.4),
-                0 0 45px rgba(0, 140, 255, 0.15),
-                inset 0 0 18px rgba(0, 217, 255, 0.08);
-
-            transform: translateY(-2px);
-        }
-
-        button:hover::before {
-            left: 150%;
-        }
-
-        button:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        /* Status */
-
-        .status {
-            margin-top: 14px;
-
-            color: #456675;
-
-            font-size: 9px;
-
-            letter-spacing: 2px;
-
-            text-transform: uppercase;
-        }
-
-        /* Animations */
-
-        @keyframes orbFloat {
-
-            0%,
-            100% {
-                transform:
-                    translateY(0)
-                    scale(1);
-            }
-
-            50% {
-                transform:
-                    translateY(-7px)
-                    scale(1.025);
-            }
-        }
-
-        @keyframes orbActive {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            25% {
-                transform: scale(1.035);
-            }
-
-            50% {
-                transform: scale(1.095);
-            }
-
-            75% {
-                transform: scale(1.035);
-            }
-        }
-
-        @keyframes ringSpin {
-
-            from {
-                transform:
-                    rotate(0deg)
-                    scaleX(1);
-            }
-
-            to {
-                transform:
-                    rotate(360deg)
-                    scaleX(1);
-            }
-        }
-
-        @keyframes ringSpinReverse {
-
-            from {
-                transform:
-                    rotate(360deg)
-                    rotateX(62deg);
-            }
-
-            to {
-                transform:
-                    rotate(0deg)
-                    rotateX(62deg);
-            }
-        }
-
-        @keyframes titlePulse {
-
-            0%,
-            100% {
-                opacity: 0.92;
-
-                text-shadow:
-                    0 0 8px
-                    rgba(125, 243, 255, 0.8),
-
-                    0 0 28px
-                    rgba(0, 217, 255, 0.45);
-            }
-
-            50% {
-                opacity: 1;
-
-                text-shadow:
-                    0 0 10px
-                    rgba(125, 243, 255, 1),
-
-                    0 0 35px
-                    rgba(0, 217, 255, 0.7),
-
-                    0 0 70px
-                    rgba(0, 140, 255, 0.3);
-            }
-        }
-
-        @keyframes statusBlink {
-
-            0%,
-            100% {
-                opacity: 0.35;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        @keyframes gridDrift {
-
-            from {
-                transform:
-                    translateY(0);
-            }
-
-            to {
-                transform:
-                    translateY(42px);
-            }
-        }
-
-        /* Mobile */
-
-        @media (max-width: 600px) {
-
-            .container {
-                min-height: 100vh;
-
-                padding:
-                    30px 18px;
-            }
-
-            h1 {
-                letter-spacing: 8px;
-
-                padding-left: 8px;
-            }
-
-            .orb {
-                width: 195px;
-                height: 195px;
-            }
-
-            .mode {
-                margin-top: 62px;
-
-                font-size: 12px;
-            }
-
-            .container::before,
-            .container::after {
-                width: 55px;
-                height: 55px;
-            }
-        }
-
-        /* Reduced motion */
-
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                animation-duration:
-                    0.001ms !important;
-
-                animation-iteration-count:
-                    1 !important;
-
-                scroll-behavior:
-                    auto !important;
-            }
-        }
-    </style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap');
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #020508;
+    color: #dffbff;
+    font-family: 'Orbitron', Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(0, 225, 255, .11), transparent 24%),
+        radial-gradient(circle at 50% 50%, rgba(0, 110, 255, .07), transparent 46%),
+        #020508;
+}
+
+/* Fine technical grid */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .24;
+    background-image:
+        linear-gradient(rgba(0, 220, 255, .07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 220, 255, .07) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(circle at center, black 0%, transparent 76%);
+}
+
+/* Moving scanline */
+body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 2px;
+    top: -10px;
+    pointer-events: none;
+    background: rgba(91, 239, 255, .18);
+    box-shadow: 0 0 22px rgba(0, 225, 255, .45);
+    animation: scan 7s linear infinite;
+}
+
+@keyframes scan {
+    to { top: 110vh; }
+}
+
+.container {
+    width: min(720px, 92vw);
+    min-height: 680px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 54px 34px 42px;
+    border: 1px solid rgba(0, 220, 255, .25);
+    background:
+        linear-gradient(145deg, rgba(4, 19, 25, .78), rgba(1, 7, 11, .90));
+    box-shadow:
+        0 0 0 1px rgba(0, 220, 255, .05) inset,
+        0 0 60px rgba(0, 180, 255, .09),
+        0 35px 100px rgba(0, 0, 0, .55);
+    clip-path: polygon(
+        0 28px, 28px 0, calc(100% - 28px) 0, 100% 28px,
+        100% calc(100% - 28px), calc(100% - 28px) 100%,
+        28px 100%, 0 calc(100% - 28px)
+    );
+}
+
+.container::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(0, 220, 255, .08);
+    pointer-events: none;
+    clip-path: inherit;
+}
+
+.container::after {
+    content: "JARVIS // NEURAL COMMAND INTERFACE";
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(101, 237, 255, .42);
+    font-size: 8px;
+    letter-spacing: 4px;
+    white-space: nowrap;
+}
+
+h1 {
+    margin: 0 0 24px;
+    font-size: clamp(34px, 7vw, 58px);
+    font-weight: 700;
+    letter-spacing: 13px;
+    padding-left: 13px;
+    color: #e9fdff;
+    text-shadow:
+        0 0 8px rgba(107, 242, 255, .85),
+        0 0 30px rgba(0, 213, 255, .42);
+}
+
+/* Corner HUD marks */
+.container > div:first-child,
+.container > div:nth-child(2) {
+    font-family: monospace;
+}
+
+/* Core orb */
+.orb {
+    width: 218px;
+    height: 218px;
+    position: relative;
+    border-radius: 50%;
+    margin: 6px 0 35px;
+    background:
+        radial-gradient(circle at 50% 50%,
+            #e8ffff 0 2%,
+            rgba(83, 238, 255, .98) 5%,
+            rgba(0, 185, 255, .45) 18%,
+            rgba(0, 87, 156, .13) 42%,
+            transparent 67%);
+    box-shadow:
+        0 0 18px rgba(72, 239, 255, .9),
+        0 0 50px rgba(0, 207, 255, .48),
+        0 0 105px rgba(0, 139, 255, .18);
+    animation: corePulse 3.2s ease-in-out infinite;
+}
+
+.orb::before,
+.orb::after {
+    content: "";
+    position: absolute;
+    inset: -17px;
+    border: 1px solid rgba(80, 234, 255, .38);
+    border-radius: 50%;
+}
+
+.orb::before {
+    border-top-color: rgba(225, 252, 255, .9);
+    border-bottom-color: rgba(0, 214, 255, .08);
+    animation: spin 8s linear infinite;
+}
+
+.orb::after {
+    inset: -34px;
+    border-color: rgba(0, 207, 255, .13);
+    border-left-color: rgba(91, 239, 255, .65);
+    border-right-color: rgba(91, 239, 255, .65);
+    animation: spinReverse 12s linear infinite;
+}
+
+.orb.active {
+    animation: speaking 1s ease-in-out infinite;
+    box-shadow:
+        0 0 25px rgba(110, 246, 255, 1),
+        0 0 70px rgba(0, 217, 255, .7),
+        0 0 130px rgba(0, 142, 255, .3);
+}
+
+@keyframes corePulse {
+    0%, 100% { transform: scale(.96); opacity: .88; }
+    50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes speaking {
+    0%, 100% { transform: scale(.96); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spinReverse { to { transform: rotate(-360deg); } }
+
+.mode {
+    margin-top: 6px;
+    padding: 8px 18px;
+    border: 1px solid rgba(0, 220, 255, .28);
+    background: rgba(0, 170, 210, .06);
+    color: #7feeff;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 0 18px rgba(0, 190, 255, .06) inset;
+}
+
+.output {
+    width: min(580px, 90%);
+    min-height: 72px;
+    margin: 24px 0 20px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.7;
+    color: #d9fbff;
+    font-family: monospace;
+    font-size: 14px;
+    letter-spacing: .4px;
+    border-left: 2px solid rgba(0, 224, 255, .35);
+    border-right: 2px solid rgba(0, 224, 255, .35);
+    background: linear-gradient(90deg, transparent, rgba(0, 213, 255, .055), transparent);
+    text-shadow: 0 0 12px rgba(97, 239, 255, .35);
+}
+
+button {
+    position: relative;
+    margin-top: 10px;
+    min-width: 220px;
+    padding: 14px 28px;
+    border: 1px solid rgba(103, 241, 255, .7);
+    color: #dfffff;
+    background: rgba(0, 175, 220, .08);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    cursor: pointer;
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px),
+                       calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+    box-shadow:
+        0 0 20px rgba(0, 205, 255, .12),
+        0 0 0 1px rgba(0, 220, 255, .04) inset;
+    transition: .2s ease;
+}
+
+button::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(104, 241, 255, .12);
+    pointer-events: none;
+}
+
+button:hover {
+    background: rgba(0, 213, 255, .16);
+    box-shadow:
+        0 0 26px rgba(0, 220, 255, .3),
+        0 0 55px rgba(0, 170, 255, .12);
+    transform: translateY(-1px);
+}
+
+button:active { transform: translateY(1px); }
+
+.status {
+    margin-top: 18px;
+    color: rgba(159, 235, 248, .56);
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+    .container {
+        min-height: 620px;
+        padding: 45px 20px 35px;
+    }
+    .orb { width: 175px; height: 175px; }
+    .output { font-size: 12px; }
+    .container::after { letter-spacing: 2px; font-size: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+</style>
 </head>
 
 <body>
 
     <div class="container">
-
-        <div
-            style="
-                position:absolute;
-                top:32px;
-                right:4px;
-                color:rgba(0,217,255,.32);
-                font-size:8px;
-                letter-spacing:3px;
-            "
-        >
-            SYS // 01
-        </div>
-
-        <div
-            style="
-                position:absolute;
-                bottom:34px;
-                left:4px;
-                color:rgba(0,217,255,.25);
-                font-size:8px;
-                letter-spacing:2px;
-            "
-        >
-            NEURAL INTERFACE
-        </div>
+        <div style="position:absolute; top:32px; right:4px; color:rgba(0,217,255,.32); font-size:8px; letter-spacing:3px;">SYS // 01</div>
+        <div style="position:absolute; bottom:34px; left:4px; color:rgba(0,217,255,.25); font-size:8px; letter-spacing:2px;">NEURAL INTERFACE</div>
 
         <h1>JARVIS</h1>
 
-        <div class="subtitle">
-            Artificial Intelligence Interface
-        </div>
-
         <div id="orb" class="orb"></div>
 
-        <div
-            id="mode"
-            class="mode passive"
-        >
+        <div id="mode" class="mode passive">
             PASSIVE MODE
         </div>
 
-        <div
-            id="output"
-            class="output"
-        >
+        <div id="output" class="output">
             Say "Hey JARVIS"
         </div>
 
@@ -731,18 +313,13 @@
             START JARVIS
         </button>
 
-        <div
-            id="status"
-            class="status"
-        >
+        <div id="status" class="status">
             System offline
         </div>
 
     </div>
 
-
     <script type="module">
-
         /*
          * =====================================================
          * KOKORO TTS
@@ -750,68 +327,44 @@
          * No system voice is used.
          * =====================================================
          */
-
-        import {
-            KokoroTTS
-        } from
-            "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+        import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
 
 
-        /*
-         * =====================================================
-         * ELEMENTS
-         * =====================================================
-         */
+        /* =====================================================
+           ELEMENTS
+        ===================================================== */
 
-        const orb =
-            document.getElementById("orb");
-
-        const mode =
-            document.getElementById("mode");
-
-        const output =
-            document.getElementById("output");
-
-        const status =
-            document.getElementById("status");
+        const orb = document.getElementById("orb");
+        const mode = document.getElementById("mode");
+        const output = document.getElementById("output");
+        const status = document.getElementById("status");
 
 
-        /*
-         * =====================================================
-         * JARVIS STATE
-         * =====================================================
-         */
+        /* =====================================================
+           JARVIS STATE
+        ===================================================== */
 
         let jarvisRunning = false;
-
         let passiveMode = true;
-
         let recognitionRunning = false;
-
         let restarting = false;
 
         let jarvisTTS = null;
-
         let ttsReady = false;
-
         let currentAudio = null;
-
         let currentAudioURL = null;
 
+        // British male Kokoro voice for JARVIS.
+        // Other British male options include: bm_fable, bm_george, bm_lewis, bm_daniel.
+        const JARVIS_VOICE = "bm_george";
 
-        /*
-         * British male Kokoro voice.
-         */
-
-        const JARVIS_VOICE =
-            "bm_george";
+        // Kokoro runs with WebGPU when available and falls back to WASM.
+        let ttsDevice = "wasm";
 
 
-        /*
-         * =====================================================
-         * SPEECH RECOGNITION
-         * =====================================================
-         */
+        /* =====================================================
+           SPEECH RECOGNITION
+        ===================================================== */
 
         const SpeechRecognition =
             window.SpeechRecognition ||
@@ -819,179 +372,102 @@
 
         let recognition = null;
 
-
         if (SpeechRecognition) {
 
-            recognition =
-                new SpeechRecognition();
+            recognition = new SpeechRecognition();
 
-            /*
-             * Continuous recognition is more appropriate
-             * for a wake-word assistant.
-             *
-             * Chrome may still end recognition,
-             * so onend() safely restarts it.
-             */
-
-            recognition.continuous = true;
-
+            recognition.continuous = false;
             recognition.interimResults = false;
 
             recognition.lang = "en-US";
 
 
-            /*
-             * Recognition started
-             */
+            recognition.onstart = function () {
 
-            recognition.onstart =
-                function () {
+                recognitionRunning = true;
 
-                    recognitionRunning = true;
-
-                    status.textContent =
-                        passiveMode
-                            ? "Listening for wake word..."
-                            : "Listening for command...";
-                };
+                status.textContent = passiveMode
+                    ? "Listening for wake word..."
+                    : "Listening for command...";
+            };
 
 
-            /*
-             * Recognition result
-             */
+            recognition.onresult = function (event) {
 
-            recognition.onresult =
-                function (event) {
+                const transcript =
+                    event.results[0][0].transcript
+                        .trim()
+                        .toLowerCase();
 
-                    const transcript =
-                        event.results[
-                            event.results.length - 1
-                        ][0]
-                            .transcript
-                            .trim()
-                            .toLowerCase();
+                console.log(transcript);
+
+                if (!jarvisRunning) {
+                    return;
+                }
 
 
-                    console.log(
-                        "Heard:",
-                        transcript
-                    );
+                /* =============================================
+                   PASSIVE MODE
+                ============================================= */
 
-
-                    if (!jarvisRunning) {
-                        return;
-                    }
-
-
-                    /*
-                     * PASSIVE MODE
-                     */
-
-                    if (passiveMode) {
-
-                        if (
-                            transcript.includes(
-                                "hey jarvis"
-                            )
-                        ) {
-
-                            activateJarvis();
-
-                        }
-
-                        return;
-                    }
-
-
-                    /*
-                     * ACTIVE MODE
-                     */
-
-                    processCommand(
-                        transcript
-                    );
-                };
-
-
-            /*
-             * IMPORTANT:
-             *
-             * Do NOT restart recognition
-             * directly from onerror().
-             *
-             * Chrome frequently reports
-             * "aborted" when ending a session.
-             *
-             * onend() handles restarting instead.
-             */
-
-            recognition.onerror =
-                function (event) {
-
-                    recognitionRunning = false;
-
-                    console.log(
-                        "Speech recognition error:",
-                        event.error
-                    );
-
-
-                    /*
-                     * "aborted" is usually Chrome
-                     * ending the current recognition
-                     * session.
-                     */
+                if (passiveMode) {
 
                     if (
-                        event.error ===
-                        "aborted"
+                        transcript.includes("hey jarvis") ||
+                        transcript.includes("hey jarvis")
                     ) {
 
-                        return;
+                        activateJarvis();
+
+                    } else {
+
+                        restartRecognition();
                     }
 
-
-                    if (!jarvisRunning) {
-                        return;
-                    }
+                    return;
+                }
 
 
-                    /*
-                     * Other recoverable errors
-                     * are handled by onend().
-                     */
-                };
+                /* =============================================
+                   ACTIVE MODE
+                ============================================= */
+
+                processCommand(transcript);
+            };
 
 
-            /*
-             * Recognition ended
-             */
+            recognition.onerror = function (event) {
 
-            recognition.onend =
-                function () {
+                recognitionRunning = false;
 
-                    recognitionRunning = false;
+                console.log("Speech recognition error:", event.error);
 
+                if (!jarvisRunning) {
+                    return;
+                }
 
-                    if (
-                        !jarvisRunning ||
-                        restarting
-                    ) {
-
-                        return;
-                    }
+                restartRecognition();
+            };
 
 
+            recognition.onend = function () {
+
+                recognitionRunning = false;
+
+                if (
+                    jarvisRunning &&
+                    !restarting
+                ) {
                     restartRecognition();
-                };
+                }
+            };
+
         }
 
 
-        /*
-         * =====================================================
-         * KOKORO VOICE INITIALIZATION
-         * =====================================================
-         */
+        /* =====================================================
+           KOKORO VOICE INITIALIZATION
+        ===================================================== */
 
         async function detectTTSDevice() {
 
@@ -1002,19 +478,14 @@
                     navigator.gpu &&
                     await navigator.gpu.requestAdapter()
                 ) {
-
                     return "webgpu";
                 }
 
-            }
-            catch (error) {
+            } catch (error) {
 
-                console.log(
-                    "WebGPU unavailable:",
-                    error
-                );
-            }
+                console.log("WebGPU unavailable, using WASM:", error);
 
+            }
 
             return "wasm";
         }
@@ -1027,20 +498,12 @@
                 status.textContent =
                     "Loading JARVIS voice...";
 
-
-                /*
-                 * Try WebGPU first.
-                 */
-
-                const ttsDevice =
-                    await detectTTSDevice();
-
+                ttsDevice = "wasm";
 
                 console.log(
                     "Kokoro TTS device:",
                     ttsDevice
                 );
-
 
                 jarvisTTS =
                     await KokoroTTS.from_pretrained(
@@ -1056,9 +519,7 @@
                         }
                     );
 
-
                 ttsReady = true;
-
 
                 console.log(
                     "Kokoro TTS loaded.",
@@ -1067,78 +528,58 @@
                         : jarvisTTS.voices
                 );
 
-
                 status.textContent =
                     "JARVIS voice ready.";
 
-
                 return true;
 
-            }
-            catch (error) {
+            } catch (error) {
 
                 console.error(
                     "Kokoro TTS initialization failed:",
                     error
                 );
 
-
                 ttsReady = false;
-
 
                 status.textContent =
                     "JARVIS voice failed to load.";
 
-
                 output.textContent =
                     "Unable to load the JARVIS voice.";
-
 
                 return false;
             }
         }
 
 
-        /*
-         * Start loading the model immediately.
-         */
-
+        // Start loading the model as soon as the page opens.
         const ttsReadyPromise =
             initializeTTS();
 
 
-        /*
-         * =====================================================
-         * JARVIS SPEAK
-         * =====================================================
-         */
+        /* =====================================================
+           JARVIS SPEAK
+        ===================================================== */
+
+
 
         async function speak(text) {
 
-            output.textContent =
-                text;
+            output.textContent = text;
 
-
-            if (
-                !jarvisTTS ||
-                !ttsReady
-            ) {
+            if (!jarvisTTS || !ttsReady) {
 
                 status.textContent =
                     "Loading JARVIS voice...";
 
-
                 const ready =
                     await ttsReadyPromise;
 
-
-                if (
-                    !ready ||
-                    !jarvisTTS
-                ) {
+                if (!ready || !jarvisTTS) {
 
                     console.error(
-                        "JARVIS TTS unavailable."
+                        "JARVIS TTS is not available."
                     );
 
                     return;
@@ -1147,16 +588,15 @@
 
 
             /*
-             * Stop previous audio.
+             * Stop any previous JARVIS audio.
              */
 
             if (currentAudio) {
 
                 currentAudio.pause();
-
                 currentAudio.currentTime = 0;
-
                 currentAudio = null;
+
             }
 
 
@@ -1172,17 +612,15 @@
 
             try {
 
-                orb.classList.add(
-                    "active"
-                );
-
+                orb.classList.add("active");
 
                 status.textContent =
                     "JARVIS speaking...";
 
 
                 /*
-                 * Generate voice.
+                 * Generate speech using the fixed
+                 * British male Kokoro voice.
                  */
 
                 const audio =
@@ -1192,59 +630,39 @@
                             voice:
                                 JARVIS_VOICE,
 
-                            speed:
-                                0.88
+                            speed: 0.88
                         }
                     );
 
 
                 /*
-                 * Convert to WAV.
+                 * Convert the generated waveform
+                 * into a playable WAV Blob.
                  */
 
                 let blob;
 
-
-                if (
-                    typeof audio.toBlob ===
-                    "function"
-                ) {
-
-                    blob =
-                        audio.toBlob();
-
+                if (typeof audio.toBlob === "function") {
+                    blob = audio.toBlob();
+                } else if (audio.audio && audio.sampling_rate) {
+                    blob = audio.toBlob
+                        ? audio.toBlob()
+                        : null;
                 }
-                else if (
-                    audio.audio &&
-                    audio.sampling_rate
-                ) {
-
-                    blob =
-                        audio.toBlob
-                            ? audio.toBlob()
-                            : null;
-                }
-
 
                 if (!blob) {
-
                     throw new Error(
-                        "Kokoro returned unsupported audio."
+                        "Kokoro returned audio in an unsupported format."
                     );
                 }
 
-
                 currentAudioURL =
-                    URL.createObjectURL(
-                        blob
-                    );
-
+                    URL.createObjectURL(blob);
 
                 currentAudio =
                     new Audio(
                         currentAudioURL
                     );
-
 
                 currentAudio.volume = 1;
 
@@ -1256,12 +674,10 @@
                             "active"
                         );
 
-
                         status.textContent =
                             passiveMode
                                 ? 'Listening for "Hey JARVIS"...'
                                 : "Awaiting command...";
-
 
                         if (currentAudioURL) {
 
@@ -1271,7 +687,6 @@
 
                             currentAudioURL = null;
                         }
-
 
                         currentAudio = null;
                     };
@@ -1285,15 +700,12 @@
                             error
                         );
 
-
                         orb.classList.remove(
                             "active"
                         );
 
-
                         status.textContent =
                             "Audio playback error.";
-
 
                         currentAudio = null;
                     };
@@ -1301,19 +713,17 @@
 
                 await currentAudio.play();
 
-            }
-            catch (error) {
+
+            } catch (error) {
 
                 console.error(
                     "JARVIS speech generation failed:",
                     error
                 );
 
-
                 orb.classList.remove(
                     "active"
                 );
-
 
                 status.textContent =
                     "JARVIS voice error.";
@@ -1321,81 +731,75 @@
         }
 
 
-        /*
-         * =====================================================
-         * START JARVIS
-         * =====================================================
-         */
+        /* =====================================================
+           START JARVIS
+        ===================================================== */
 
         function startJarvis() {
 
             if (!recognition) {
-
                 output.textContent =
                     "Speech recognition is not supported in this browser.";
-
                 return;
             }
-
 
             if (jarvisRunning) {
                 return;
             }
 
-
             jarvisRunning = true;
-
             passiveMode = true;
 
+            mode.textContent = "PASSIVE MODE";
+            mode.className = "mode passive";
 
-            mode.textContent =
-                "PASSIVE MODE";
-
-            mode.className =
-                "mode passive";
-
-
-            status.textContent =
-                "Requesting microphone...";
-
-
-            try {
-
-                recognition.start();
-
-            }
-            catch (error) {
-
-                console.log(
-                    "Initial recognition start:",
-                    error
-                );
-            }
-
+            status.textContent = "Requesting permissions...";
 
             /*
-             * Give the browser a moment
-             * before JARVIS speaks.
-             */
+               Ask Chrome for microphone permission.
+            */
+            try {
+                recognition.start();
+            } catch (error) {
+                console.log(error);
+            }
 
-            setTimeout(
-                () => {
-
-                    speak(
-                        "JARVIS online. Say Hey JARVIS when you require assistance."
-                    );
-
-                },
-                800
+            /*
+               Attempt a popup from the user's button click.
+               Chrome may allow it automatically because this
+               code is running directly from the button click.
+            */
+            const popup = window.open(
+                "about:blank",
+                "_blank"
             );
+
+            if (popup) {
+                popup.close();
+
+                status.textContent =
+                    "Microphone and popup access ready.";
+            } else {
+                status.textContent =
+                    "Microphone ready. Popups may be blocked.";
+            }
+
+            /*
+               Give the browser a moment before JARVIS speaks.
+            */
+            setTimeout(() => {
+
+                speak(
+                    "JARVIS online. Say Hey JARVIS when you require assistance."
+                );
+
+            }, 800);
         }
 
 
-        /*
-         * =====================================================
-         * ACTIVATE JARVIS
-         * =====================================================
-         */
+        /* =====================================================
+           ACTIVATE JARVIS
+        ===================================================== */
 
         function activateJarvis() {
 
@@ -1405,7 +809,6 @@
             mode.textContent =
                 "ACTIVE MODE";
 
-
             mode.className =
                 "mode active-text";
 
@@ -1414,55 +817,50 @@
                 "Awaiting command...";
 
 
-            speak(
-                "Yes?"
-            );
+            speak("Yes?");
+
+
+            /*
+               Give the voice a moment to finish.
+            */
+
+            setTimeout(() => {
+
+                restartRecognition();
+
+            }, 1000);
         }
 
 
-        /*
-         * =====================================================
-         * PROCESS COMMAND
-         * =====================================================
-         */
+        /* =====================================================
+           PROCESS COMMAND
+        ===================================================== */
 
         function processCommand(command) {
 
-            console.log(
-                "Command:",
-                command
-            );
+            console.log("Command:", command);
 
 
-            /*
-             * Remove wake word.
-             */
+            /* =============================================
+               REMOVE WAKE WORD IF PRESENT
+            ============================================= */
 
-            command =
-                command
-                    .replace(
-                        "hey jarvis",
-                        ""
-                    )
-                    .trim();
+            command = command
+                .replace("hey jarvis", "")
+                .trim();
 
 
-            /*
-             * GREETINGS
-             */
+            /* =============================================
+               GREETINGS
+            ============================================= */
 
             if (
                 command === "hello" ||
                 command === "hi" ||
-                command.includes(
-                    "hello jarvis"
-                )
+                command.includes("hello jarvis")
             ) {
 
-                speak(
-                    "Good day. How may I assist you?"
-                );
-
+                speak("Good day. How may I assist you?");
 
                 returnToPassive();
 
@@ -1470,34 +868,25 @@
             }
 
 
-            /*
-             * OPEN YOUTUBE
-             */
+            /* =============================================
+               OPEN YOUTUBE
+            ============================================= */
 
             if (
-                command.includes(
-                    "open youtube"
-                ) ||
+                command.includes("open youtube") ||
                 command === "youtube"
             ) {
 
-                speak(
-                    "Opening YouTube."
-                );
+                speak("Opening YouTube.");
 
+                setTimeout(() => {
 
-                setTimeout(
-                    () => {
+                    window.open(
+                        "https://www.youtube.com",
+                        "_blank"
+                    );
 
-                        window.open(
-                            "https://www.youtube.com",
-                            "_blank"
-                        );
-
-                    },
-                    700
-                );
-
+                }, 700);
 
                 returnToPassive();
 
@@ -1505,34 +894,25 @@
             }
 
 
-            /*
-             * OPEN SPOTIFY
-             */
+            /* =============================================
+               OPEN SPOTIFY
+            ============================================= */
 
             if (
-                command.includes(
-                    "open spotify"
-                ) ||
+                command.includes("open spotify") ||
                 command === "spotify"
             ) {
 
-                speak(
-                    "Opening Spotify."
-                );
+                speak("Opening Spotify.");
 
+                setTimeout(() => {
 
-                setTimeout(
-                    () => {
+                    window.open(
+                        "https://open.spotify.com",
+                        "_blank"
+                    );
 
-                        window.open(
-                            "https://open.spotify.com",
-                            "_blank"
-                        );
-
-                    },
-                    700
-                );
-
+                }, 700);
 
                 returnToPassive();
 
@@ -1540,34 +920,25 @@
             }
 
 
-            /*
-             * OPEN GOOGLE
-             */
+            /* =============================================
+               OPEN GOOGLE
+            ============================================= */
 
             if (
-                command.includes(
-                    "open google"
-                ) ||
+                command.includes("open google") ||
                 command === "google"
             ) {
 
-                speak(
-                    "Opening Google."
-                );
+                speak("Opening Google.");
 
+                setTimeout(() => {
 
-                setTimeout(
-                    () => {
+                    window.open(
+                        "https://www.google.com",
+                        "_blank"
+                    );
 
-                        window.open(
-                            "https://www.google.com",
-                            "_blank"
-                        );
-
-                    },
-                    700
-                );
-
+                }, 700);
 
                 returnToPassive();
 
@@ -1575,40 +946,24 @@
             }
 
 
-            /*
-             * SEARCH GOOGLE
-             */
+            /* =============================================
+               SEARCH GOOGLE
+            ============================================= */
 
             if (
-                command.startsWith(
-                    "search for"
-                ) ||
-                command.startsWith(
-                    "google"
-                )
+                command.startsWith("search for") ||
+                command.startsWith("google")
             ) {
 
-                let search =
-                    command
-                        .replace(
-                            "search for",
-                            ""
-                        )
-                        .replace(
-                            "google",
-                            ""
-                        )
-                        .trim();
+                let search = command
+                    .replace("search for", "")
+                    .replace("google", "")
+                    .trim();
 
 
-                if (
-                    search.length === 0
-                ) {
+                if (search.length === 0) {
 
-                    speak(
-                        "What would you like me to search for?"
-                    );
-
+                    speak("What would you like me to search for?");
 
                     returnToPassive();
 
@@ -1617,25 +972,19 @@
 
 
                 speak(
-                    "Searching Google for " +
-                    search
+                    "Searching Google for " + search
                 );
 
 
-                setTimeout(
-                    () => {
+                setTimeout(() => {
 
-                        window.open(
-                            "https://www.google.com/search?q=" +
-                            encodeURIComponent(
-                                search
-                            ),
-                            "_blank"
-                        );
+                    window.open(
+                        "https://www.google.com/search?q=" +
+                        encodeURIComponent(search),
+                        "_blank"
+                    );
 
-                    },
-                    700
-                );
+                }, 700);
 
 
                 returnToPassive();
@@ -1644,33 +993,24 @@
             }
 
 
-            /*
-             * TIME
-             */
+            /* =============================================
+               TIME
+            ============================================= */
 
             if (
-                command.includes(
-                    "what time"
-                ) ||
+                command.includes("what time") ||
                 command === "time" ||
-                command.includes(
-                    "current time"
-                )
+                command.includes("current time")
             ) {
 
-                const now =
-                    new Date();
-
+                const now = new Date();
 
                 const time =
                     now.toLocaleTimeString(
                         [],
                         {
-                            hour:
-                                "numeric",
-
-                            minute:
-                                "2-digit"
+                            hour: "numeric",
+                            minute: "2-digit"
                         }
                     );
 
@@ -1687,36 +1027,25 @@
             }
 
 
-            /*
-             * DATE
-             */
+            /* =============================================
+               DATE
+            ============================================= */
 
             if (
-                command.includes(
-                    "what date"
-                ) ||
+                command.includes("what date") ||
                 command === "date" ||
-                command.includes(
-                    "today's date"
-                )
+                command.includes("today's date")
             ) {
 
-                const now =
-                    new Date();
-
+                const now = new Date();
 
                 const date =
                     now.toLocaleDateString(
                         [],
                         {
-                            weekday:
-                                "long",
-
-                            month:
-                                "long",
-
-                            day:
-                                "numeric"
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric"
                         }
                     );
 
@@ -1733,19 +1062,19 @@
             }
 
 
-            /*
-             * HELP
-             */
+            /* =============================================
+               HELP
+            ============================================= */
 
             if (
                 command === "help" ||
-                command.includes(
-                    "what can you do"
-                )
+                command.includes("what can you do")
             ) {
 
                 speak(
-                    "I can open websites, search Google, tell you the time and date, and respond to basic commands."
+                    "I can open websites, search Google, " +
+                    "tell you the time and date, and respond " +
+                    "to basic commands."
                 );
 
 
@@ -1755,42 +1084,31 @@
             }
 
 
-            /*
-             * STOP JARVIS
-             */
+            /* =============================================
+               STOP JARVIS
+            ============================================= */
 
             if (
-                command.includes(
-                    "stop listening"
-                ) ||
-                command.includes(
-                    "go offline"
-                ) ||
+                command.includes("stop listening") ||
+                command.includes("go offline") ||
                 command === "shutdown"
             ) {
 
-                speak(
-                    "Going offline."
-                );
+                speak("Going offline.");
 
+                setTimeout(() => {
 
-                setTimeout(
-                    () => {
+                    stopJarvis();
 
-                        stopJarvis();
-
-                    },
-                    1500
-                );
-
+                }, 1500);
 
                 return;
             }
 
 
-            /*
-             * UNKNOWN COMMAND
-             */
+            /* =============================================
+               UNKNOWN COMMAND
+            ============================================= */
 
             speak(
                 "I'm sorry, I don't currently have a command for that."
@@ -1801,11 +1119,9 @@
         }
 
 
-        /*
-         * =====================================================
-         * RETURN TO PASSIVE MODE
-         * =====================================================
-         */
+        /* =====================================================
+           RETURN TO PASSIVE MODE
+        ===================================================== */
 
         function returnToPassive() {
 
@@ -1814,7 +1130,6 @@
 
             mode.textContent =
                 "PASSIVE MODE";
-
 
             mode.className =
                 "mode passive";
@@ -1825,36 +1140,39 @@
 
 
             /*
-             * Do NOT manually stop/start recognition.
-             *
-             * The recognition session can remain alive
-             * and simply listen for the wake word.
-             */
+               Give speech synthesis time to finish.
+            */
+
+            setTimeout(() => {
+
+                restartRecognition();
+
+            }, 1500);
         }
 
 
-        /*
-         * =====================================================
-         * SAFE RESTART SPEECH RECOGNITION
-         * =====================================================
-         */
+        /* =====================================================
+           RESTART SPEECH RECOGNITION
+        ===================================================== */
 
         function restartRecognition() {
 
-            if (
-                !jarvisRunning ||
-                !recognition
-            ) {
-
+            if (!jarvisRunning) {
                 return;
             }
 
 
-            if (
-                recognitionRunning ||
-                restarting
-            ) {
+            if (!recognition) {
+                return;
+            }
 
+
+            if (recognitionRunning) {
+                return;
+            }
+
+
+            if (restarting) {
                 return;
             }
 
@@ -1862,58 +1180,31 @@
             restarting = true;
 
 
-            /*
-             * IMPORTANT:
-             *
-             * Give Chrome enough time to completely
-             * close its previous recognition session.
-             */
+            setTimeout(() => {
 
-            setTimeout(
-                () => {
+                try {
 
-                    if (!jarvisRunning) {
+                    recognition.start();
 
-                        restarting = false;
+                } catch (error) {
 
-                        return;
-                    }
+                    console.log(
+                        "Recognition restart:",
+                        error
+                    );
+
+                }
 
 
-                    try {
+                restarting = false;
 
-                        recognition.start();
-
-                    }
-                    catch (error) {
-
-                        /*
-                         * Chrome can throw InvalidStateError
-                         * if recognition is already starting.
-                         *
-                         * This is safe to ignore.
-                         */
-
-                        console.log(
-                            "Recognition restart skipped:",
-                            error
-                        );
-                    }
-
-
-                    restarting = false;
-
-                },
-                1000
-            );
+            }, 500);
         }
 
 
-        /*
-         * =====================================================
-         * STOP JARVIS
-         * =====================================================
-         */
+        /* =====================================================
+           STOP JARVIS
+        ===================================================== */
 
         function stopJarvis() {
 
@@ -1925,29 +1216,19 @@
             if (recognition) {
 
                 try {
-
                     recognition.stop();
+                } catch (error) { }
 
-                }
-                catch (error) {
-
-                    console.log(
-                        "Recognition stop:",
-                        error
-                    );
-                }
             }
 
 
             if (currentAudio) {
 
                 currentAudio.pause();
-
                 currentAudio.currentTime = 0;
-
                 currentAudio = null;
-            }
 
+            }
 
             if (currentAudioURL) {
 
@@ -1961,12 +1242,9 @@
 
             recognitionRunning = false;
 
-            restarting = false;
-
 
             mode.textContent =
                 "OFFLINE";
-
 
             mode.className =
                 "mode passive";
@@ -1980,17 +1258,13 @@
                 'Press "START JARVIS" to begin';
 
 
-            orb.classList.remove(
-                "active"
-            );
+            orb.classList.remove("active");
         }
 
 
-        /*
-         * =====================================================
-         * KEYBOARD SHORTCUT
-         * =====================================================
-         */
+        /* =====================================================
+           KEYBOARD SHORTCUT
+        ===================================================== */
 
         document.addEventListener(
             "keydown",
@@ -2002,20 +1276,20 @@
                 ) {
 
                     startJarvis();
+
                 }
+
             }
         );
 
-
         /*
-         * Expose functions for HTML buttons.
+         * The page uses an inline button handler for START JARVIS.
+         * Expose the function globally so the handler can still work
+         * after converting this script to an ES module.
          */
 
-        window.startJarvis =
-            startJarvis;
-
-        window.stopJarvis =
-            stopJarvis;
+        window.startJarvis = startJarvis;
+        window.stopJarvis = stopJarvis;
 
     </script>
 
