@@ -994,6 +994,54 @@ button:active { transform: translateY(1px); }
 
 
             /* =============================================
+               SEARCH YOUTUBE
+            ============================================= */
+
+            if (
+                command.startsWith("video search for") ||
+                command.startsWith("youtube")
+            ) {
+
+                let search = command
+                    .replace("video search for", "")
+                    .replace("youtube", "")
+                    .trim();
+
+
+                if (search.length === 0) {
+
+                    speak("What would you like me to search for?");
+
+                    returnToPassive();
+
+                    return;
+                }
+
+
+                speak(
+                    "Searching Youtube for " + search
+                );
+
+
+                setTimeout(() => {
+
+                    window.open(
+                        "https://www.youtube.com/results?search_query=" +
+                        encodeURIComponent(search),
+                        "_blank"
+                    );
+
+                }, 700);
+
+
+                returnToPassive();
+
+                return;
+            }
+
+
+
+            /* =============================================
                TIME
             ============================================= */
 
